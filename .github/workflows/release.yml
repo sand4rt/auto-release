@@ -33,13 +33,56 @@ jobs:
           git show ${{ github.event.pull_request.base.sha }}:package.json > old-package.json
           echo "version=$(jq -r .version old-package.json)" >> $GITHUB_OUTPUT
 
-      - name: Compare versions
+      - name: Get dependency versions
+        id: depcheck
+        run: |
+          # Extract old and new dependency versions
+          git show ${{ github.event.pull_request.base.sha }}:package.json > old-package.json
+          OLD_DEP=$(jq -r '.dependencies["@playwright/experimental-ct-core"]' old-package.json)
+          NEW_DEP=$(jq -r '.dependencies["@playwright/experimental-ct-core"]' package.json)
+
+          echo "old_dep=$OLD_DEP" >> $GITHUB_OUTPUT
+          echo "new_dep=$NEW_DEP" >> $GITHUB_OUTPUT
+
+          # Strip ^ or ~
+          OLD_CLEAN=$(echo $OLD_DEP | sed 's/^[^0-9]*//')
+          NEW_CLEAN=$(echo $NEW_DEP | sed 's/^[^0-9]*//')
+
+          if [ "$OLD_CLEAN" != "$NEW_CLEAN" ]; then
+            echo "Dependency version changed from $OLD_CLEAN to $NEW_CLEAN"
+            echo "dep_changed=true" >> $GITHUB_OUTPUT
+            echo "new_version=$NEW_CLEAN" >> $GITHUB_OUTPUT
+          else
+            echo "dep_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Sync root version with dependency version
+        if: steps.depcheck.outputs.dep_changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          npm version ${{ steps.depcheck.outputs.new_version }} --no-git-tag-version
+          git add package.json package-lock.json || true
+          git commit -m "chore: sync root version to match @playwright/experimental-ct-core@${{ steps.depcheck.outputs.new_version }}"
+          git push
+
+      - name: Re-check current version after sync
+        if: steps.depcheck.outputs.dep_changed == 'true'
+        id: current_updated
+        run: |
+          echo "version=$(jq -r .version package.json)" >> $GITHUB_OUTPUT
+
+      - name: Compare versions for release
         id: compare
         run: |
-          echo "current=${{ steps.current.outputs.version }}"
-          echo "previous=${{ steps.previous.outputs.version }}"
-          if [ "${{ steps.current.outputs.version }}" != "${{ steps.previous.outputs.version }}" ]; then
+          CUR="${{ steps.current_updated.outputs.version || steps.current.outputs.version }}"
+          PREV="${{ steps.previous.outputs.version }}"
+          echo "current=$CUR"
+          echo "previous=$PREV"
+          if [ "$CUR" != "$PREV" ]; then
             echo "release_needed=true" >> $GITHUB_OUTPUT
+            echo "version=$CUR" >> $GITHUB_OUTPUT
           else
             echo "release_needed=false" >> $GITHUB_OUTPUT
           fi
@@ -48,9 +91,9 @@ jobs:
         if: steps.compare.outputs.release_needed == 'true'
         uses: ncipollo/release-action@v1
         with:
-          tag: v${{ steps.current.outputs.version }}
-          name: v${{ steps.current.outputs.version }}
+          tag: v${{ steps.compare.outputs.version }}
+          name: v${{ steps.compare.outputs.version }}
           body: |
-            Automated release for version v${{ steps.current.outputs.version }}.
+            Automated release for version v${{ steps.compare.outputs.version }}.
           token: ${{ secrets.GH_PAT }}
           generateReleaseNotes: true

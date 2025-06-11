@@ -1,0 +1,53 @@
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  release-on-merge:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # needed for full git history
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Get current version
+        id: current
+        run: |
+          echo "version=$(jq -r .version package.json)" >> $GITHUB_OUTPUT
+
+      - name: Get previous version from base branch
+        id: previous
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          git show origin/${{ github.event.pull_request.base.ref }}:package.json > old-package.json
+          echo "version=$(jq -r .version old-package.json)" >> $GITHUB_OUTPUT
+
+      - name: Compare versions
+        id: compare
+        run: |
+          echo "current=${{ steps.current.outputs.version }}"
+          echo "previous=${{ steps.previous.outputs.version }}"
+          if [ "${{ steps.current.outputs.version }}" != "${{ steps.previous.outputs.version }}" ]; then
+            echo "release_needed=true" >> $GITHUB_OUTPUT
+          else
+            echo "release_needed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release
+        if: steps.compare.outputs.release_needed == 'true'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: v${{ steps.current.outputs.version }}
+          name: v${{ steps.current.outputs.version }}
+          body: |
+            Automated release for version v${{ steps.current.outputs.version }}.
+          token: ${{ secrets.GITHUB_TOKEN }}

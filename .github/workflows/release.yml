@@ -82,30 +82,6 @@ jobs:
 
           gh pr merge "$PR_URL" --merge --auto
 
-      - name: Push to new branch
-        run: |
-          BRANCH="auto/version-bump-$(date +%s)"
-          git checkout -b $BRANCH
-          git push origin $BRANCH
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-
-      - name: Create Pull Request
-        id: cpr
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GH_PAT }}
-          base: main
-          branch: ${{ steps.cpr.outputs.pull-request-branch }}
-          title: "chore: bump version"
-          body: "Automated version bump PR"
-
-      - name: Enable auto-merge
-        run: |
-          gh pr merge ${{ steps.cpr.outputs.pull-request-url }} --merge --auto
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-
       - name: Re-check current version after sync
         if: steps.depcheck.outputs.dep_changed == 'true'
         id: current_updated

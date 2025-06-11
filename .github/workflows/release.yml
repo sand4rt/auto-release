@@ -72,6 +72,7 @@ jobs:
           git commit -m "chore: sync root version to match @playwright/experimental-ct-core@${{ steps.depcheck.outputs.new_version }}"
 
           git push origin $BRANCH
+          echo "branch=$BRANCH" >> $GITHUB_ENV
 
       - name: Create Pull Request to sync version
         if: steps.depcheck.outputs.dep_changed == 'true'

@@ -1,0 +1,14 @@
+{
+  "name": "auto-release",
+  "version": "1.54.1",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@playwright/experimental-ct-core": "1.54.20"
+  }
+}

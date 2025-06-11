@@ -58,6 +58,8 @@ jobs:
 
       - name: Sync root version with dependency version
         if: steps.depcheck.outputs.dep_changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "sand4rt"
           git config user.email "sander@webphy.com"

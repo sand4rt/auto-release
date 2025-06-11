@@ -1,3 +1,5 @@
+name: Release
+
 on:
   pull_request:
     types:
@@ -24,11 +26,11 @@ jobs:
         run: |
           echo "version=$(jq -r .version package.json)" >> $GITHUB_OUTPUT
 
-      - name: Get previous version from base branch
+      - name: Get previous version from base commit
         id: previous
         run: |
-          git fetch origin ${{ github.event.pull_request.base.ref }}
-          git show origin/${{ github.event.pull_request.base.ref }}:package.json > old-package.json
+          git fetch origin ${{ github.event.pull_request.base.sha }}
+          git show ${{ github.event.pull_request.base.sha }}:package.json > old-package.json
           echo "version=$(jq -r .version old-package.json)" >> $GITHUB_OUTPUT
 
       - name: Compare versions

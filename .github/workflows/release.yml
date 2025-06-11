@@ -66,8 +66,31 @@ jobs:
           git add package.json package-lock.json || true
           git commit -m "chore: sync root version to match @playwright/experimental-ct-core@${{ steps.depcheck.outputs.new_version }}"
 
+          BRANCH="sync-version-${{ steps.depcheck.outputs.new_version }}-$(date +%s)"
+          git checkout -b $BRANCH
           git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ github.repository }}
-          git push origin HEAD:main
+          git push origin $BRANCH
+
+          echo "branch=$BRANCH" >> $GITHUB_ENV
+
+      - name: Create Pull Request to sync version
+        if: steps.depcheck.outputs.dep_changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        id: pr
+        with:
+          token: ${{ secrets.GH_PAT }}
+          base: main
+          branch: ${{ env.branch }}
+          title: "chore: sync root version to match @playwright/experimental-ct-core@${{ steps.depcheck.outputs.new_version }}"
+          body: |
+            Automated PR to sync root version with updated @playwright/experimental-ct-core dependency.
+
+      - name: Enable Auto-Merge
+        if: steps.depcheck.outputs.dep_changed == 'true'
+        run: |
+          gh pr merge "${{ steps.pr.outputs.pull-request-url }}" --merge --auto
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
 
       - name: Re-check current version after sync
         if: steps.depcheck.outputs.dep_changed == 'true'

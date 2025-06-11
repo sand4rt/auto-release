@@ -77,8 +77,7 @@ jobs:
             --title "chore: sync root version to match @playwright/experimental-ct-core@${{ steps.depcheck.outputs.new_version }}" \
             --body "Automated PR to sync @playwright/experimental-ct-core dependency." \
             --base main \
-            --head $BRANCH \
-            --label automation)
+            --head $BRANCH)
 
           echo "PR created at $PR_URL"
 

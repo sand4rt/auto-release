@@ -80,7 +80,6 @@ jobs:
 
           echo "PR created at $PR_URL"
 
-          # Enable auto-merge
           gh pr merge "$PR_URL" --merge --auto
 
       - name: Push to new branch

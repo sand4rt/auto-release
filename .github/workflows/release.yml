@@ -52,4 +52,5 @@ jobs:
           name: v${{ steps.current.outputs.version }}
           body: |
             Automated release for version v${{ steps.current.outputs.version }}.
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PAT }}
+          generateReleaseNotes: true

@@ -9,6 +9,6 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@playwright/experimental-ct-core": "1.99.0"
+    "@playwright/experimental-ct-core": "1.99.1"
   }
 }

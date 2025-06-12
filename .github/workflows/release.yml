@@ -117,13 +117,13 @@ jobs:
             echo "release_needed=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create GitHub Release
-        if: steps.compare.outputs.release_needed == 'true'
-        uses: ncipollo/release-action@v1
-        with:
-          tag: v${{ steps.compare.outputs.version }}
-          name: v${{ steps.compare.outputs.version }}
-          body: |
-            Automated release for version v${{ steps.compare.outputs.version }}.
-          token: ${{ secrets.GH_PAT }}
-          generateReleaseNotes: true
+      # - name: Create GitHub Release
+      #   if: steps.compare.outputs.release_needed == 'true'
+      #   uses: ncipollo/release-action@v1
+      #   with:
+      #     tag: v${{ steps.compare.outputs.version }}
+      #     name: v${{ steps.compare.outputs.version }}
+      #     body: |
+      #       Automated release for version v${{ steps.compare.outputs.version }}.
+      #     token: ${{ secrets.GH_PAT }}
+      #     generateReleaseNotes: true
